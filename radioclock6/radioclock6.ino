@@ -52,17 +52,23 @@ long startTimeHigh = 0;
 long startTimeLow = 0;
 
 void pulseChange() {
-  //Serial.println("CHANGE");
+  // save the timestamp of the last pulse interrupt
   lastPulseChange = thisPulseChange;
-  thisPulseChange = millis();
-  lastPulseWidth = pulseWidth;
-  pulseWidth = thisPulseChange - lastPulseChange; 
-  //secondBitOffset = secondMillis/100;
-  //Serial.println(secondBitOffset);
   
+  // grab the start time of this pulse interrupt
+  thisPulseChange = millis();
+  
+  // save the duration of the last pulse
+  lastPulseWidth = pulseWidth;
+  
+  //calculate the duration of this pulse
+  pulseWidth = thisPulseChange - lastPulseChange; 
+  
+  //toggle the state of the led
   ledState = !ledState;
-    // set the LED with the ledState of the variable:
-    digitalWrite(ledPin, ledState);
+  
+  // set the LED with the ledState of the variable:
+  digitalWrite(ledPin, ledState);
 }
 
 void risingPulse() {
@@ -94,21 +100,19 @@ void fallingPulse() {
   //Serial.println(pulseWidth);
 }
 
-
-
- 
-  // This interrupt routine continues building a data frame and setting
-  // the clock.
   
 void setup() {
 //attachInterrupt(0, pulseChange, CHANGE) ;
-// this looks reversed asthe module reversed the serial output of the carrier state
+// this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
-Serial.begin(19200);           // set up Serial library at 9600 bps
-Serial.println("Clock Starting");  // prints hello with ending line break 
-pinMode(ledPin, OUTPUT); 
+
+
+Serial.begin(19200);           // set up Serial library at 19200 bps
+Serial.println("Clock Starting");  // Say something to show we have restarted.
+pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
+
 // as msf signal is on by default and is turned off to "send data"
 memset(&second[0], 0x01, sizeof(second));
 }
