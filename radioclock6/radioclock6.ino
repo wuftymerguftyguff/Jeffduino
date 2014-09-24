@@ -8,10 +8,10 @@ unsigned long currentMillis;
 unsigned long previousMillis = 0; 
 unsigned long interval = 1000;
 
-
+//starting offset inside per second "byte"
+int startingOffset = 0;
 // starting state of the LED
 int ledState = LOW;
-
 
 // the bit number of the current data
 volatile unsigned long secondBitOffset;
@@ -56,6 +56,29 @@ int pulseTime = 0;
 long startTimeHigh = 0;
 long startTimeLow = 0;
 
+void setBits(int width,int level) {
+  
+  int numBitsToSet = max(width/100,1);  // Each "bit" is 100ms, but we have to set at least one
+  int bitOffset = startingOffset;       // Which bit should we set next?
+  startingOffset += numBitsToSet;       // what bit should we start with the next time we are called?
+  
+  if ( level == HIGH ) return;  //return immediately for high bits as these are defaulted to 1 anyway
+  
+  
+  for (int i=0;i < numBitsToSet;i++) {
+    //Serial.print(" setting bit ");
+    //Serial.print(bitOffset);
+    //Serial.print(" of ");
+    //Serial.print(numBitsToSet);
+    //Serial.print(" bits "); 
+    second[bitOffset] = true;
+    bitOffset++; 
+  } 
+  
+ 
+  
+}
+
 void pulseChange() {
   // save the timestamp of the last pulse interrupt
   lastPulseChange = thisPulseChange;
@@ -82,58 +105,66 @@ void risingPulse() {
   second[secondBitOffset] = false;
   //print the length of the last low pulse
   //Serial.print("RISING");
-  Serial.print("LOW: ");
+  Serial.print("HIGH: ");
   Serial.print(pulseWidth);
   Serial.print(" ");
+  setBits(pulseWidth,LOW);
 }
 
 void fallingPulse() {
   pulseChange(); 
-  Serial.print("HIGH: ");
+  Serial.print("LOW: ");
   Serial.print(pulseWidth);
+  
+  setBits(pulseWidth,HIGH);
+  
   if ( lastPulseWidth >= 450 && pulseWidth >= 450 ) {
     TOM = true;
   }
   if ( pulseWidth >= 450 ) {
     TOS = true;
   }
-
-    //print the length of the last high pulse
-  //Serial.println(secondBitOffset);
-  //Serial.print("HIGH: ");
-  
-  //Serial.println(pulseWidth);
 }
 
   
 void setup() {
-//attachInterrupt(0, pulseChange, CHANGE) ;
 // this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
 
-Serial.begin(19200);           // set up Serial library at 19200 bps
+Serial.begin(115200);           // set up Serial library at 19200 bps
 Serial.println("Clock Starting");  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
 
 // as msf signal is on by default and is turned off to "send data"
-memset(&second[0], 0x01, sizeof(second));
+memset(&second[0], 0x00, sizeof(second));
 }
 
 void loop() {
   
    if ( TOM == true ) {  
-    Serial.print("\nTOM *************\n");  
+    Serial.print("TOM *************\n");  
     TOM = false;
     //previousMillis = millis();
   }
   
-  if ( TOS == true ) {  
+  if ( TOS == true ) {
+    // loop thru the 10 bits in the prior second and print them out
+    Serial.print(" ");
+    for (int i=0;i<=9;i++) { 
+      Serial.print(second[i]); 
+    }
+    Serial.print(" ");
+    //Display the A and B Bits
+    for (int i=1;i<=2;i++) { 
+      Serial.print(second[i]); 
+    }
     Serial.print("\nTOS ");  
     TOS = false;
-    memset(&second[0], 0x01, sizeof(second));
+    memset(&second[0], 0x00, sizeof(second));
+    startingOffset = 0;
   }
   
  
