@@ -3,10 +3,15 @@
 #define LOW 0
 #define HIGH 1
 
+// the time of this pulse
 unsigned long currentMillis;
 unsigned long previousMillis = 0; 
 unsigned long interval = 1000;
+
+
+// starting state of the LED
 int ledState = LOW;
+
 
 // the bit number of the current data
 volatile unsigned long secondBitOffset;
@@ -122,7 +127,7 @@ void loop() {
    if ( TOM == true ) {  
     Serial.print("\nTOM *************\n");  
     TOM = false;
-    previousMillis = millis();
+    //previousMillis = millis();
   }
   
   if ( TOS == true ) {  
