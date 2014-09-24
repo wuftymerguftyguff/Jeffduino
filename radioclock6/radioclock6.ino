@@ -62,7 +62,7 @@ void setBits(int width,int level) {
   int bitOffset = startingOffset;       // Which bit should we set next?
   startingOffset += numBitsToSet;       // what bit should we start with the next time we are called?
   
-  if ( level == HIGH ) return;  //return immediately for high bits as these are defaulted to 1 anyway
+  if ( level == LOW ) return;  //return immediately for high bits as these are defaulted to 1 anyway
   
   
   for (int i=0;i < numBitsToSet;i++) {
@@ -108,7 +108,7 @@ void risingPulse() {
   Serial.print("HIGH: ");
   Serial.print(pulseWidth);
   Serial.print(" ");
-  setBits(pulseWidth,LOW);
+  setBits(pulseWidth,HIGH);
 }
 
 void fallingPulse() {
@@ -116,7 +116,7 @@ void fallingPulse() {
   Serial.print("LOW: ");
   Serial.print(pulseWidth);
   
-  setBits(pulseWidth,HIGH);
+  setBits(pulseWidth,LOW);
   
   if ( lastPulseWidth >= 450 && pulseWidth >= 450 ) {
     TOM = true;
