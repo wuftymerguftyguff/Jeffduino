@@ -3,6 +3,9 @@
 #define LOW 0
 #define HIGH 1
 
+//# define if we are DEBUGGING
+//#define DEBUG 
+
 // the time of this pulse
 unsigned long currentMillis;
 unsigned long previousMillis = 0; 
@@ -58,11 +61,11 @@ long startTimeLow = 0;
 
 void setBits(int width,int level) {
   
-  int numBitsToSet = max(width/100,1);  // Each "bit" is 100ms, but we have to set at least one
+  int numBitsToSet = max(width/100,1);  // Each "bit" is 100ms, but we have to set at least one (one bit pulses are oten reported as < 100 ms !!
   int bitOffset = startingOffset;       // Which bit should we set next?
   startingOffset += numBitsToSet;       // what bit should we start with the next time we are called?
   
-  if ( level == LOW ) return;  //return immediately for high bits as these are defaulted to 1 anyway
+  if ( level == LOW ) return;  //return immediately for low bits as these are defaulted to 1 anyway
   
   
   for (int i=0;i < numBitsToSet;i++) {
@@ -100,21 +103,31 @@ void pulseChange() {
 }
 
 void risingPulse() {
+  
+  // do the generic stuff that applies for any pulse
   pulseChange();
-  secondBitOffset = ((currentMillis - previousMillis) )/ 100;
-  second[secondBitOffset] = false;
-  //print the length of the last low pulse
-  //Serial.print("RISING");
+  
+#ifdef DEBUG  
+  Serial.print("RISING ");
   Serial.print("HIGH: ");
   Serial.print(pulseWidth);
   Serial.print(" ");
+#endif  
+
   setBits(pulseWidth,HIGH);
 }
 
 void fallingPulse() {
+  
+  // do the generic stuff that applies for any pulse
   pulseChange(); 
+  
+#ifdef DEBUG  
+  Serial.print("FALLING ");
   Serial.print("LOW: ");
   Serial.print(pulseWidth);
+  Serial.print(" ");
+#endif  
   
   setBits(pulseWidth,LOW);
   
@@ -144,24 +157,33 @@ memset(&second[0], 0x00, sizeof(second));
 
 void loop() {
   
-   if ( TOM == true ) {  
-    Serial.print("TOM *************\n");  
+   if ( TOM == true ) { 
+    Serial.print("\nTOM *************\n"); 
     TOM = false;
     //previousMillis = millis();
   }
   
   if ( TOS == true ) {
-    // loop thru the 10 bits in the prior second and print them out
+    
+    
+#ifdef DEBUG
+    // loop thru the 10 bits in the prior second and print them ou
     Serial.print(" ");
     for (int i=0;i<=9;i++) { 
       Serial.print(second[i]); 
     }
+    
+#endif
     Serial.print(" ");
     //Display the A and B Bits
     for (int i=1;i<=2;i++) { 
       Serial.print(second[i]); 
     }
-    Serial.print("\nTOS ");  
+    
+#ifdef DEBUG
+    Serial.print("\nTOS "); 
+#endif 
+
     TOS = false;
     memset(&second[0], 0x00, sizeof(second));
     startingOffset = 0;
