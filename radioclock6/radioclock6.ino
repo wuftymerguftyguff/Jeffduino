@@ -6,18 +6,11 @@
 //# define if we are DEBUGGING
 //#define DEBUG 
 
-// the time of this pulse
-unsigned long currentMillis;
-unsigned long previousMillis = 0; 
-unsigned long interval = 1000;
-
 //starting offset inside per second "byte"
-int startingOffset = 0;
-// starting state of the LED
-int ledState = LOW;
+volatile int startingOffset = 0;
 
-// the bit number of the current data
-volatile unsigned long secondBitOffset;
+// starting state of the LED
+volatile int ledState = LOW;
 
 // time of this pulse state change
 long thisPulseChange = 0;
@@ -27,9 +20,6 @@ long lastPulseChange = 0;
 // in msf each second is cplit into 10 100ms "bits"
 
 bool second[10];
-
-// the pulse (second) offset in this minute
-int secondOffset = 0;
 
 // a boolean to show if we are at the top of the minute
 bool TOM = false;
@@ -134,11 +124,12 @@ void fallingPulse() {
   
   setBits(pulseWidth,LOW);
   
-  if ( lastPulseWidth >= 450 && pulseWidth >= 450 ) {
-    TOM = true;
-  }
+  
   if ( pulseWidth >= 450 ) {
     TOS = true;
+    if ( lastPulseWidth >= 450 ) {
+      TOM = true;
+    }
   }
 }
 
@@ -160,14 +151,14 @@ memset(&second[0], 0x00, sizeof(second));
 
 void loop() {
   
-   if ( TOM == true ) { 
-    Serial.print("\nTOM *************\n");
-    secondOffset = 0; 
-    TOM = false;
-    //previousMillis = millis();
-  }
+  
   
   if ( TOS == true ) {
+    
+     if ( TOM == true ) { 
+        Serial.print("\nTOM *************\n"); 
+        TOM = false;
+     }
     
     
 #ifdef DEBUG
@@ -175,27 +166,20 @@ void loop() {
     Serial.print(" ");
     for (int i=0;i<=9;i++) { 
       Serial.print(second[i]); 
-    }    
+    }
+    
 #endif
-
     Serial.print(" ");
-    Serial.print(secondOffset);
-    Serial.print(":");
     //Display the A and B Bits
     for (int i=1;i<=2;i++) { 
       Serial.print(second[i]); 
     }
     
-    Serial.print("\n");
-    
 #ifdef DEBUG
-    Serial.print("TOS "); 
+    Serial.print("\nTOS "); 
 #endif 
 
     TOS = false;
-    // next second
-    secondOffset ++;
-    
     memset(&second[0], 0x00, sizeof(second));
     startingOffset = 0;
   }
