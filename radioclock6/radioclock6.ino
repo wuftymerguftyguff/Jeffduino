@@ -124,11 +124,12 @@ void fallingPulse() {
   
   setBits(pulseWidth,LOW);
   
-  if ( lastPulseWidth >= 450 && pulseWidth >= 450 ) {
-    TOM = true;
-  }
+  
   if ( pulseWidth >= 450 ) {
     TOS = true;
+    if ( lastPulseWidth >= 450 ) {
+      TOM = true;
+    }
   }
 }
 
@@ -150,12 +151,14 @@ memset(&second[0], 0x00, sizeof(second));
 
 void loop() {
   
-   if ( TOM == true ) { 
-    Serial.print("\nTOM *************\n"); 
-    TOM = false;
-  }
+  
   
   if ( TOS == true ) {
+    
+     if ( TOM == true ) { 
+        Serial.print("\nTOM *************\n"); 
+        TOM = false;
+     }
     
     
 #ifdef DEBUG
