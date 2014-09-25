@@ -6,18 +6,11 @@
 //# define if we are DEBUGGING
 //#define DEBUG 
 
-// the time of this pulse
-unsigned long currentMillis;
-unsigned long previousMillis = 0; 
-unsigned long interval = 1000;
-
 //starting offset inside per second "byte"
-int startingOffset = 0;
-// starting state of the LED
-int ledState = LOW;
+volatile int startingOffset = 0;
 
-// the bit number of the current data
-volatile unsigned long secondBitOffset;
+// starting state of the LED
+volatile int ledState = LOW;
 
 // time of this pulse state change
 long thisPulseChange = 0;
@@ -160,7 +153,6 @@ void loop() {
    if ( TOM == true ) { 
     Serial.print("\nTOM *************\n"); 
     TOM = false;
-    //previousMillis = millis();
   }
   
   if ( TOS == true ) {
