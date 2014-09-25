@@ -21,6 +21,10 @@ long lastPulseChange = 0;
 
 bool second[10];
 
+// the pulse (second) offset in this minute
+int secondOffset = 0;
+
+
 // a boolean to show if we are at the top of the minute
 bool TOM = false;
 bool TOS = false;
@@ -158,6 +162,7 @@ void loop() {
      if ( TOM == true ) { 
         Serial.print("\nTOM *************\n"); 
         TOM = false;
+        secondOffset = 0;
      }
     
     
@@ -170,16 +175,22 @@ void loop() {
     
 #endif
     Serial.print(" ");
+    Serial.print(secondOffset);
+    Serial.print(":");
     //Display the A and B Bits
     for (int i=1;i<=2;i++) { 
       Serial.print(second[i]); 
     }
-    
+    Serial.print("\n");
+        
 #ifdef DEBUG
-    Serial.print("\nTOS "); 
+    Serial.print("TOS "); 
 #endif 
 
     TOS = false;
+        // next second
+    secondOffset ++;
+    
     memset(&second[0], 0x00, sizeof(second));
     startingOffset = 0;
   }
