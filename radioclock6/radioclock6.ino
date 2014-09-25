@@ -21,6 +21,9 @@ long lastPulseChange = 0;
 
 bool second[10];
 
+byte aBuffer[8];// buffer for 'A' bits
+byte bBuffer[8];// buffer for 'B' bits
+
 // the pulse (second) offset in this minute
 int secondOffset = 0;
 
@@ -131,12 +134,41 @@ void fallingPulse() {
   
   if ( pulseWidth >= 450 ) {
     TOS = true;
+    secondOffset++;  
     if ( lastPulseWidth >= 450 ) {
       TOM = true;
+      Serial.print("\nTOM *************\n");
+      secondOffset = 0;
     }
+    fillBuffers(second[1],second[2]); 
   }
 }
 
+void fillBuffers(bool A,bool B) {
+  int bufferElement=secondOffset / 8;
+  int bufferElementOffset = secondOffset % 8 ^ 0x07 ;
+  
+  Serial.print(secondOffset);
+  Serial.print(" ");
+  
+  Serial.print(bufferElement);
+  Serial.print(" ");
+  
+  Serial.print(bufferElementOffset);
+  Serial.print(" ");
+  
+  Serial.print(A);
+  Serial.print(B);
+  
+  bitWrite(aBuffer[bufferElement],bufferElementOffset,A);
+  bitWrite(bBuffer[bufferElement],bufferElementOffset,B);
+  
+  Serial.print(" ");
+  
+  Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));
+  Serial.println(bitRead(bBuffer[bufferElement],bufferElementOffset));
+  
+}
   
 void setup() {
 // this looks reversed as the module reversed the serial output of the carrier state
@@ -154,17 +186,13 @@ memset(&second[0], 0x00, sizeof(second));
 }
 
 void loop() {
-  
-  
-  
   if ( TOS == true ) {
-    
+    /*
      if ( TOM == true ) { 
         Serial.print("\nTOM *************\n"); 
-        TOM = false;
-        secondOffset = 0;
+        TOM = false;   
      }
-    
+    */
     
 #ifdef DEBUG
     // loop thru the 10 bits in the prior second and print them ou
@@ -188,11 +216,11 @@ void loop() {
 #endif 
 
     TOS = false;
-        // next second
-    secondOffset ++;
     
     memset(&second[0], 0x00, sizeof(second));
     startingOffset = 0;
+    
+   
   }
   
  
