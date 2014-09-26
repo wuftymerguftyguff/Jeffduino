@@ -166,7 +166,23 @@ void printBufferBits() {
   Serial.print("I               II Year I");
   Serial.print("\n");
   Serial.print(GetChunk(17,8,A_BUFFER));
+  Serial.print("\n20");
+  Serial.print(bcdToDec(GetChunk(17,8,A_BUFFER)));
+  Serial.print(" ");
+  Serial.print(bcdToDec(GetChunk(25,5,A_BUFFER)));
+  Serial.print(" ");
+  Serial.print(bcdToDec(GetChunk(30,6,A_BUFFER)));
   Serial.print("\n");
+}
+
+byte decToBcd(byte val)			// Convert normal decimal numbers to binary coded decimal
+{
+  return ( (val/10*16) + (val%10) );
+}
+
+byte bcdToDec(byte val)			// Convert binary coded decimal to normal decimal numbers
+{
+  return ( (val/16*10) + (val%16) );
 }
 
 byte GetChunk(int start, int numBits, int buffer)  {
