@@ -21,6 +21,14 @@ struct timeElement {
 
 
 #define NPLYEAR (struct timeElement){A_BUFFER,17,8}
+#define NPLMONTH (struct timeElement){A_BUFFER,25,5}
+#define NPLDAY (struct timeElement){A_BUFFER,30,6}
+#define NPLWEEKDAY (struct timeElement){A_BUFFER,36,3}
+#define NPLHOUR (struct timeElement){A_BUFFER,39,6}
+#define NPLMINUTE (struct timeElement){A_BUFFER,45,7}
+
+
+
 
 //starting offset inside per second "byte"
 volatile int startingOffset = 0;
@@ -161,6 +169,7 @@ void fallingPulse() {
 }
 
 void printBufferBits() {
+#ifdef DEBUG 
   for (int i=0;i<=secondOffset;i++) {
     int bufferElement=i / 8;
     int bufferElementOffset = i % 8 ^ 0x07 ;
@@ -170,25 +179,30 @@ void printBufferBits() {
   Serial.print("\n");
   // bcd messing
   Serial.print("                 ");
+  /*
   for (int i=17;i<=24;i++) {
     int bufferElement=i / 8;
     int bufferElementOffset = i % 8 ^ 0x07 ;
     Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));   
   }  
-  Serial.print("\n");
+  */
   Serial.print("I               II Year I");
+#endif 
   Serial.print("\n");
-  Serial.print(GetChunk(17,8,A_BUFFER));
-  Serial.print("\n20");
-  Serial.print(bcdToDec(GetChunk(NPLYEAR.offset,NPLYEAR.numBytes,NPLYEAR.buffer)));
   Serial.print(" ");
-  Serial.print("\n20");
+  Serial.print(getTimeVal(NPLDAY));
+  Serial.print("/");
+  Serial.print(getTimeVal(NPLMONTH));
+  Serial.print("/20");
   Serial.print(getTimeVal(NPLYEAR));
   Serial.print(" ");
-  Serial.print(bcdToDec(GetChunk(25,5,A_BUFFER)));
-  Serial.print(" ");
-  Serial.print(bcdToDec(GetChunk(30,6,A_BUFFER)));
+  Serial.print(getTimeVal(NPLHOUR));
+  Serial.print(":");
+  Serial.print(getTimeVal(NPLMINUTE));
+  Serial.print(":");
+  Serial.print(secondOffset);
   Serial.print("\n");
+  
 }
 
 int getTimeVal(struct timeElement element) {
@@ -296,7 +310,7 @@ void loop() {
       Serial.print(second[i]); 
     }
     
-#endif
+
     Serial.print(" ");
     Serial.print(secondOffset);
     Serial.print(":");
@@ -305,6 +319,7 @@ void loop() {
       Serial.print(second[i]); 
     }
     Serial.print("\n");
+#endif
     
     printBufferBits();
     
@@ -319,7 +334,7 @@ void loop() {
     startingOffset = 0;
     
     if ( TOM == true ) { 
-        clearBuffers();
+        //clearBuffers();
         TOM = false;   
      }
     
