@@ -6,8 +6,21 @@
 #define A_BUFFER 0
 #define B_BUFFER 1
 
+//#define NPLYEAR 0
+
 //# define if we are DEBUGGING
 //#define DEBUG 
+
+//structure
+struct timeElement {
+  int buffer;
+  int offset;
+  int numBytes;  
+};
+
+
+
+#define NPLYEAR (struct timeElement){A_BUFFER,17,8}
 
 //starting offset inside per second "byte"
 volatile int startingOffset = 0;
@@ -167,12 +180,19 @@ void printBufferBits() {
   Serial.print("\n");
   Serial.print(GetChunk(17,8,A_BUFFER));
   Serial.print("\n20");
-  Serial.print(bcdToDec(GetChunk(17,8,A_BUFFER)));
+  Serial.print(bcdToDec(GetChunk(NPLYEAR.offset,NPLYEAR.numBytes,NPLYEAR.buffer)));
+  Serial.print(" ");
+  Serial.print("\n20");
+  Serial.print(getTimeVal(NPLYEAR));
   Serial.print(" ");
   Serial.print(bcdToDec(GetChunk(25,5,A_BUFFER)));
   Serial.print(" ");
   Serial.print(bcdToDec(GetChunk(30,6,A_BUFFER)));
   Serial.print("\n");
+}
+
+int getTimeVal(struct timeElement element) {
+    return bcdToDec(GetChunk(element.offset,element.numBytes,element.buffer));  
 }
 
 byte decToBcd(byte val)			// Convert normal decimal numbers to binary coded decimal
@@ -252,7 +272,6 @@ void setup() {
 // this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
-
 
 Serial.begin(115200);           // set up Serial library at 19200 bps
 Serial.println("Clock Starting");  // Say something to show we have restarted.
