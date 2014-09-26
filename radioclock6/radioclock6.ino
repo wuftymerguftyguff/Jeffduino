@@ -3,6 +3,9 @@
 #define LOW 0
 #define HIGH 1
 
+#define A_BUFFER 0
+#define B_BUFFER 1
+
 //# define if we are DEBUGGING
 //#define DEBUG 
 
@@ -151,7 +154,50 @@ void printBufferBits() {
     Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));  
     //Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset)); 
     }
-  Serial.print("\n");  
+  Serial.print("\n");
+  // bcd messing
+  Serial.print("                 ");
+  for (int i=17;i<=24;i++) {
+    int bufferElement=i / 8;
+    int bufferElementOffset = i % 8 ^ 0x07 ;
+    Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));   
+  }  
+  Serial.print("\n");
+  Serial.print("I               II Year I");
+  Serial.print("\n");
+  Serial.print(GetChunk(17,8,A_BUFFER));
+  Serial.print("\n");
+}
+
+byte GetChunk(int start, int numBits, int buffer)  {
+// return the byte 'chunk' containing the number of bits read at the starting
+// bit position in the raw buffer upto 8 bits. returns a byte
+
+  byte chunk = 0;
+  byte bitVal = 0;
+  int counter = numBits - 1;
+  int bitCounter = 0;				// a count of the number of "1" bits
+
+  for(int i = start;i < start + numBits;i++)					// loop for numBits
+	{
+                if ( buffer == A_BUFFER ) {
+		  bitVal = bitRead(aBuffer[abs(i/8)], (i % 8) ^ 0x07);	// get the bit from the buffer
+                } else if  ( buffer == B_BUFFER ) {
+                  bitVal = bitRead(bBuffer[abs(i/8)], (i % 8) ^ 0x07);	// get the bit from the buffer
+                } else {
+                  bitVal = 0;
+                }
+		bitWrite(chunk,counter,bitVal);							// write the bit to "chunk"
+		if(bitVal) bitCounter++;								// if it's a "1" increment the bitCounter
+		counter--;												// decrement the counter
+	}
+
+  return chunk;
+}
+
+void clearBuffers() {
+  memset(&aBuffer[0], 0x00, sizeof(aBuffer));
+  memset(&bBuffer[0], 0x00, sizeof(bBuffer));
 }
 
 void fillBuffers(bool A,bool B) {
@@ -178,11 +224,11 @@ void fillBuffers(bool A,bool B) {
 
   
   Serial.print(" ");
-  
-  */
  
   Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));
   Serial.println(bitRead(bBuffer[bufferElement],bufferElementOffset));
+  
+  */
   
 }
   
@@ -199,15 +245,13 @@ pinMode(ledPin, OUTPUT); // set up the ledpin
 
 // as msf signal is on by default and is turned off to "send data"
 memset(&second[0], 0x00, sizeof(second));
+clearBuffers();
 }
 
 void loop() {
   if ( TOS == true ) {
     /*
-     if ( TOM == true ) { 
-        Serial.print("\nTOM *************\n"); 
-        TOM = false;   
-     }
+     
     */
     
 #ifdef DEBUG
@@ -238,6 +282,11 @@ void loop() {
     
     memset(&second[0], 0x00, sizeof(second));
     startingOffset = 0;
+    
+    if ( TOM == true ) { 
+        clearBuffers();
+        TOM = false;   
+     }
     
    
   }
