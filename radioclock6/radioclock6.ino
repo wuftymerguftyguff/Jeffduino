@@ -6,18 +6,11 @@
 //# define if we are DEBUGGING
 //#define DEBUG 
 
-// the time of this pulse
-unsigned long currentMillis;
-unsigned long previousMillis = 0; 
-unsigned long interval = 1000;
-
 //starting offset inside per second "byte"
-int startingOffset = 0;
-// starting state of the LED
-int ledState = LOW;
+volatile int startingOffset = 0;
 
-// the bit number of the current data
-volatile unsigned long secondBitOffset;
+// starting state of the LED
+volatile int ledState = LOW;
 
 // time of this pulse state change
 long thisPulseChange = 0;
@@ -27,6 +20,13 @@ long lastPulseChange = 0;
 // in msf each second is cplit into 10 100ms "bits"
 
 bool second[10];
+
+byte aBuffer[8];// buffer for 'A' bits
+byte bBuffer[8];// buffer for 'B' bits
+
+// the pulse (second) offset in this minute
+int secondOffset = 0;
+
 
 // a boolean to show if we are at the top of the minute
 bool TOM = false;
@@ -131,14 +131,60 @@ void fallingPulse() {
   
   setBits(pulseWidth,LOW);
   
-  if ( lastPulseWidth >= 450 && pulseWidth >= 450 ) {
-    TOM = true;
-  }
+  
   if ( pulseWidth >= 450 ) {
     TOS = true;
+    secondOffset++;  
+    if ( lastPulseWidth >= 450 ) {
+      TOM = true;
+      Serial.print("\nTOM *************\n");
+      secondOffset = 0;
+    }
+    fillBuffers(second[1],second[2]); 
   }
 }
 
+void printBufferBits() {
+  for (int i=0;i<=secondOffset;i++) {
+    int bufferElement=i / 8;
+    int bufferElementOffset = i % 8 ^ 0x07 ;
+    Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));  
+    //Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset)); 
+    }
+  Serial.print("\n");  
+}
+
+void fillBuffers(bool A,bool B) {
+  int bufferElement=secondOffset / 8;
+  int bufferElementOffset = secondOffset % 8 ^ 0x07 ;
+  
+  bitWrite(aBuffer[bufferElement],bufferElementOffset,A);
+  bitWrite(bBuffer[bufferElement],bufferElementOffset,B);
+  
+  
+  /*
+  
+  Serial.print(secondOffset);
+  Serial.print(" ");
+  
+  Serial.print(bufferElement);
+  Serial.print(" ");
+  
+  Serial.print(bufferElementOffset);
+  Serial.print(" ");
+  
+  Serial.print(A);
+  Serial.print(B);
+
+  
+  Serial.print(" ");
+  
+  */
+ 
+  Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));
+  Serial.println(bitRead(bBuffer[bufferElement],bufferElementOffset));
+  
+}
   
 void setup() {
 // this looks reversed as the module reversed the serial output of the carrier state
@@ -156,15 +202,13 @@ memset(&second[0], 0x00, sizeof(second));
 }
 
 void loop() {
-  
-   if ( TOM == true ) { 
-    Serial.print("\nTOM *************\n"); 
-    TOM = false;
-    //previousMillis = millis();
-  }
-  
   if ( TOS == true ) {
-    
+    /*
+     if ( TOM == true ) { 
+        Serial.print("\nTOM *************\n"); 
+        TOM = false;   
+     }
+    */
     
 #ifdef DEBUG
     // loop thru the 10 bits in the prior second and print them ou
@@ -175,18 +219,27 @@ void loop() {
     
 #endif
     Serial.print(" ");
+    Serial.print(secondOffset);
+    Serial.print(":");
     //Display the A and B Bits
     for (int i=1;i<=2;i++) { 
       Serial.print(second[i]); 
     }
+    Serial.print("\n");
     
+    printBufferBits();
+    
+        
 #ifdef DEBUG
-    Serial.print("\nTOS "); 
+    Serial.print("TOS "); 
 #endif 
 
     TOS = false;
+    
     memset(&second[0], 0x00, sizeof(second));
     startingOffset = 0;
+    
+   
   }
   
  
