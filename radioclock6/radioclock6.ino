@@ -144,9 +144,25 @@ void fallingPulse() {
   }
 }
 
+void printBufferBits() {
+  for (int i=0;i<=secondOffset;i++) {
+    int bufferElement=i / 8;
+    int bufferElementOffset = i % 8 ^ 0x07 ;
+    Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));  
+    //Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset)); 
+    }
+  Serial.print("\n");  
+}
+
 void fillBuffers(bool A,bool B) {
   int bufferElement=secondOffset / 8;
   int bufferElementOffset = secondOffset % 8 ^ 0x07 ;
+  
+  bitWrite(aBuffer[bufferElement],bufferElementOffset,A);
+  bitWrite(bBuffer[bufferElement],bufferElementOffset,B);
+  
+  
+  /*
   
   Serial.print(secondOffset);
   Serial.print(" ");
@@ -159,12 +175,12 @@ void fillBuffers(bool A,bool B) {
   
   Serial.print(A);
   Serial.print(B);
-  
-  bitWrite(aBuffer[bufferElement],bufferElementOffset,A);
-  bitWrite(bBuffer[bufferElement],bufferElementOffset,B);
+
   
   Serial.print(" ");
   
+  */
+ 
   Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));
   Serial.println(bitRead(bBuffer[bufferElement],bufferElementOffset));
   
@@ -210,6 +226,9 @@ void loop() {
       Serial.print(second[i]); 
     }
     Serial.print("\n");
+    
+    printBufferBits();
+    
         
 #ifdef DEBUG
     Serial.print("TOS "); 
