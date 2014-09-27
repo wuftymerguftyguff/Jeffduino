@@ -5,6 +5,8 @@
 
 #define A_BUFFER 0
 #define B_BUFFER 1
+#define SAVED_A_BUFFER 2
+#define SAVED_B_BUFFER 3
 
 //#define NPLYEAR 0
 
@@ -18,14 +20,16 @@ struct timeElement {
   int numBytes;  
 };
 
+#define NPLMINUTEMARKERBITPATTERN 126
 
+#define NPLYEAR (struct timeElement){SAVED_A_BUFFER,17,8}
+#define NPLMONTH (struct timeElement){SAVED_A_BUFFER,25,5}
+#define NPLDAY (struct timeElement){SAVED_A_BUFFER,30,6}
+#define NPLWEEKDAY (struct timeElement){SAVED_A_BUFFER,36,3}
+#define NPLHOUR (struct timeElement){SAVED_A_BUFFER,39,6}
+#define NPLMINUTE (struct timeElement){SAVED_A_BUFFER,45,7}
 
-#define NPLYEAR (struct timeElement){A_BUFFER,17,8}
-#define NPLMONTH (struct timeElement){A_BUFFER,25,5}
-#define NPLDAY (struct timeElement){A_BUFFER,30,6}
-#define NPLWEEKDAY (struct timeElement){A_BUFFER,36,3}
-#define NPLHOUR (struct timeElement){A_BUFFER,39,6}
-#define NPLMINUTE (struct timeElement){A_BUFFER,45,7}
+#define NPLMINUTEMARKER (struct timeElement){A_BUFFER,52,8}
 
 
 
@@ -47,6 +51,9 @@ bool second[10];
 
 byte aBuffer[8];// buffer for 'A' bits
 byte bBuffer[8];// buffer for 'B' bits
+
+byte savedaBuffer[8]; // saved copies of the above buffers
+byte savedbBuffer[8];
 
 // the pulse (second) offset in this minute
 int secondOffset = 0;
@@ -158,36 +165,58 @@ void fallingPulse() {
   
   if ( pulseWidth >= 450 ) {
     TOS = true;
-    secondOffset++;  
-    if ( lastPulseWidth >= 450 ) {
-      TOM = true;
+    //secondOffset++;
+    //Serial.println(GetChunk(secondOffset - 8,8,A_BUFFER));
+    //Serial.println(NPLMINUTEMARKERBITPATTERN);
+      
+    fillBuffers(second[1],second[2]);
+    memset(&second[0], 0x00, sizeof(second));
+    secondOffset++;
+    startingOffset = 0;
+  }
+/*  
+  if ( getTimeByte(NPLMINUTEMARKER) == NPLMINUTEMARKERBITPATTERN ) {
+      Serial.println("1st they match");
       Serial.print("\nTOM *************\n");
       secondOffset = 0;
-    }
-    fillBuffers(second[1],second[2]); 
-  }
+   }
+*/
+    
+
+    if ( GetChunk(secondOffset - 8,8,A_BUFFER) == NPLMINUTEMARKERBITPATTERN ) {
+      saveBuffers(); 
+      clearBuffers();
+      secondOffset = 0;
+  } 
+
+
 }
 
 void printBufferBits() {
-#ifdef DEBUG 
+
   for (int i=0;i<=secondOffset;i++) {
     int bufferElement=i / 8;
     int bufferElementOffset = i % 8 ^ 0x07 ;
     Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));  
     //Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset)); 
     }
+    
   Serial.print("\n");
   // bcd messing
-  Serial.print("                 ");
+ // Serial.print("                 ");
   /*
   for (int i=17;i<=24;i++) {
     int bufferElement=i / 8;
     int bufferElementOffset = i % 8 ^ 0x07 ;
     Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));   
   }  
-  */
+  
   Serial.print("I               II Year I");
-#endif 
+  */
+  
+}
+
+void printTime() {
   Serial.print("\n");
   Serial.print(" ");
   Serial.print(getTimeVal(NPLDAY));
@@ -201,16 +230,15 @@ void printBufferBits() {
   Serial.print(getTimeVal(NPLMINUTE));
   Serial.print(":");
   Serial.print(secondOffset);
-  Serial.print("\n");
-  
+  Serial.print("\n");  
 }
 
 int getTimeVal(struct timeElement element) {
-    return bcdToDec(getTimeByte(element.offset,element.numBytes,element.buffer));  
+    return bcdToDec(GetChunk(element.offset,element.numBytes,element.buffer));  
 }
 
-byte getTimeByte(int offset,int numBytes, int buffer) {
-  return GetChunk(offset,numBytes,buffer);
+byte getTimeByte(struct timeElement element) {
+  return GetChunk(element.offset,element.numBytes,element.buffer);
 }
 
 byte decToBcd(byte val)			// Convert normal decimal numbers to binary coded decimal
@@ -238,6 +266,10 @@ byte GetChunk(int start, int numBits, int buffer)  {
 		  bitVal = bitRead(aBuffer[abs(i/8)], (i % 8) ^ 0x07);	// get the bit from the buffer
                 } else if  ( buffer == B_BUFFER ) {
                   bitVal = bitRead(bBuffer[abs(i/8)], (i % 8) ^ 0x07);	// get the bit from the buffer
+                } else if  ( buffer == SAVED_A_BUFFER ) {
+                  bitVal = bitRead(savedaBuffer[abs(i/8)], (i % 8) ^ 0x07);	// get the bit from the buffer
+                } else if  ( buffer == SAVED_B_BUFFER ) {
+                  bitVal = bitRead(savedbBuffer[abs(i/8)], (i % 8) ^ 0x07);	// get the bit from the buffer    
                 } else {
                   bitVal = 0;
                 }
@@ -252,6 +284,11 @@ byte GetChunk(int start, int numBits, int buffer)  {
 void clearBuffers() {
   memset(&aBuffer[0], 0x00, sizeof(aBuffer));
   memset(&bBuffer[0], 0x00, sizeof(bBuffer));
+}
+
+void saveBuffers() {
+  memcpy(&savedaBuffer[0],&aBuffer[0],sizeof(aBuffer));
+  memcpy(&savedbBuffer[0],&bBuffer[0],sizeof(bBuffer));
 }
 
 void fillBuffers(bool A,bool B) {
@@ -303,10 +340,7 @@ clearBuffers();
 
 void loop() {
   if ( TOS == true ) {
-    /*
-     
-    */
-    
+ 
 #ifdef DEBUG
     // loop thru the 10 bits in the prior second and print them ou
     Serial.print(" ");
@@ -325,20 +359,20 @@ void loop() {
     Serial.print("\n");
 #endif
     
-    printBufferBits();
+    //printBufferBits();
     
         
 #ifdef DEBUG
     Serial.print("TOS "); 
 #endif 
-
+    printTime();
     TOS = false;
     
-    memset(&second[0], 0x00, sizeof(second));
-    startingOffset = 0;
     
-    if ( TOM == true ) { 
-        //clearBuffers();
+    
+    if ( TOM == true ) {
+        printTime();
+       
         TOM = false;   
      }
     
