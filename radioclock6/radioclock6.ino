@@ -206,7 +206,11 @@ void printBufferBits() {
 }
 
 int getTimeVal(struct timeElement element) {
-    return bcdToDec(GetChunk(element.offset,element.numBytes,element.buffer));  
+    return bcdToDec(getTimeByte(element.offset,element.numBytes,element.buffer));  
+}
+
+byte getTimeByte(int offset,int numBytes, int buffer) {
+  return GetChunk(offset,numBytes,buffer);
 }
 
 byte decToBcd(byte val)			// Convert normal decimal numbers to binary coded decimal
