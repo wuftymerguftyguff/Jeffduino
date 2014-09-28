@@ -1,3 +1,4 @@
+#include <stdio.h>
 #define wwvbPin 2
 #define ledPin 13
 #define LOW 0
@@ -7,6 +8,8 @@
 #define B_BUFFER 1
 #define SAVED_A_BUFFER 2
 #define SAVED_B_BUFFER 3
+
+#define CURRENTCENTURY 20
 
 //#define NPLYEAR 0
 
@@ -217,20 +220,15 @@ void printBufferBits() {
 }
 
 void printTime() {
-  Serial.print("\n");
-  Serial.print(" ");
-  Serial.print(getTimeVal(NPLDAY));
-  Serial.print("/");
-  Serial.print(getTimeVal(NPLMONTH));
-  Serial.print("/20");
-  Serial.print(getTimeVal(NPLYEAR));
-  Serial.print(" ");
-  Serial.print(getTimeVal(NPLHOUR));
-  Serial.print(":");
-  Serial.print(getTimeVal(NPLMINUTE));
-  Serial.print(":");
-  Serial.print(secondOffset);
-  Serial.print("\n");  
+  char buffer [20];
+  sprintf(buffer, "%02d/%02d/20%02d %02d:%02d:%02d", getTimeVal(NPLDAY),
+                                      getTimeVal(NPLMONTH),
+                                      getTimeVal(NPLYEAR),
+                                      getTimeVal(NPLHOUR),
+                                      getTimeVal(NPLMINUTE),
+                                      secondOffset                            
+  );
+  Serial.println(buffer);
 }
 
 int getTimeVal(struct timeElement element) {
